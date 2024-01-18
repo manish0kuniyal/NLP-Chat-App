@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+ /* Make the container take the full viewport height */
+  overflow: hidden; /* Hide overflow content */
+  background-color: rgb(0, 0, 0);
+}
