@@ -1,63 +1,90 @@
-import React, { useEffect, useState } from 'react'
-import {addDoc,collection,serverTimestamp,onSnapshot,query,where, orderBy} from 'firebase/firestore'
-import { auth } from '../firebase'
-import {db} from '../firebase'
-// import { query } from 'express'
-function Chat(props) {
-    const {room}=props
-    const [newMessage,setNewMessage]=useState("")
-    const [messages,setMessages]=useState([])
-    const messagesRef=collection(db,"messages")
+import React, { useEffect, useState } from 'react';
+import { io } from 'socket.io-client';
 
-    useEffect(()=>{
-        const queryMessages=query(messagesRef,where("room","==",room),orderBy("createdAt"))
-      const unsubscribe=  onSnapshot(queryMessages,(snapshot)=>{
-            let messages=[]
-            snapshot.forEach((doc)=>{
-                messages.push({...doc.data(),id:doc.id})
-            })
-            setMessages(messages)
-        })
-        return ()=>unsubscribe()
-    },[])
+function Chat() {
+  const [socket, setSocket] = useState(null);
+  const [message, setMessage] = useState('');
+  const [sendMessages, setSendMessages] = useState([]);
+  const [ChatRoom, setChatRoom] = useState('');
+  const [roomCreated, setRoomCreated] = useState(false);
 
-    const handleSubmit=async(e)=>{
-        e.preventDefault();
-        if(newMessage==="")
-        return
+  useEffect(() => {
+    setSocket(io('http://localhost:4000'));
 
-        await addDoc(messagesRef,{
-            text:newMessage,
-            createdAt:serverTimestamp(),
-            user:auth.currentUser.displayName,
-            room
-        })
+    // Cleanup function
+    return () => {
+      if (socket) {
+        socket.disconnect();
+      }
+    };
+  }, []);
 
-        setNewMessage("")
+  useEffect(() => {
+    if (socket) {
+      socket.on('message from server', (data) => {
+        setSendMessages((prev) => [...prev, { message: data.message, received: true }]);
+      });
     }
- 
-    return (
-    <div className=' flex flex-col mx-[5%] p-4 sm:mx-[35%]'>
-        <div className=''>
-        <h1 className='font-bold text-[1.4rem] my-3'>Welcome to room : {room.toUpperCase()}</h1>
-        </div>
-        <div className='my-4 font-mono'>
-        {messages.map((message)=>
-        <h1><b className='font-sans'>{message.user}</b> : {message.text}</h1>)}
-        
-        </div>
+  }, [socket]);
 
-      <form onSubmit={handleSubmit} className=' flex flex-col'>
-        <input className='border-2 rounded-[12px] p-2 my-2' placeholder='type message...'
-        onChange={(e)=>setNewMessage(e.target.value)}
-         value={newMessage}
-        />
-        <button className='text-white font-bold my-4 p-1 w-[30%] bg-green-600'>
-            Send
-        </button>
-      </form>
-    </div>
-  )
+  useEffect(() => {
+    if (ChatRoom && socket) {
+      socket.emit('join-room', { room: ChatRoom });
+    }
+  }, [ChatRoom, socket]);
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    console.log('Sending message:', message);
+    socket.emit('send-message', { message }, () => {
+    console.log('Message sent successfully.')
+    setSendMessages((prev) => [...prev, { message, received: false }])
+    setMessage('')
+    })
+   }
+  
+
+  function SetRoom(e) {
+    e.preventDefault();
+    setRoomCreated(true);
+  }
+
+  return (
+    <>
+      <div>Azppz</div>
+      {roomCreated ? (
+        <div className='border-2'>
+          <div>
+            {sendMessages.map((data,index) => (
+              <h1 className={`ml-${data.received ? 0 : 10}`} key={index}>
+                {data.message}
+              </h1>
+            ))}
+          </div>
+          <br></br>
+          <h1>{ChatRoom}</h1>
+          <form onSubmit={handleSubmit}>
+            <input
+              placeholder='message'
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
+            <button>Send</button>
+          </form>
+        </div>
+      ) : (
+        <div>
+          <form className='border-2 border-green-300 m-4' onSubmit={SetRoom}>
+            <input
+              placeholder='enter room name'
+              onChange={(e) => setChatRoom(e.target.value)}
+            />
+            <button>Create room</button>
+          </form>
+        </div>
+      )}
+    </>
+  );
 }
 
-export default Chat
+export default Chat;

@@ -1,39 +1,53 @@
-const express =require('express')
-const http=require('http')
-const path =require('path')
-const { Server }=require('socket.io')
-const cors=require('cors')
-const app=express()
+const express = require('express');
+const http = require('http');
+const path = require('path');
+const { Server } = require('socket.io');
+const cors = require('cors');
 
-const server=http.createServer(app)
+const app = express();
+const server = http.createServer(app);
 
-const io=new Server(server,{
-  cors:{
-    origin:['http://localhost:3000']
+const io = new Server(server, {
+  cors: {
+    origin: ['http://localhost:3000']
   }
-})
+});
 
-app.use(express.static(path.resolve('./public')))
-app.use(cors())
+// Keep track of rooms and their associated sockets
+const roomSockets = {};
 
-io.on('connection',(socket)=>{
-  //frontend to backend
-  socket.on('send-message',(data)=>{
-    //sending data from server
-    socket.broadcast.emit("message from server",data)
-    console.log('message received',data)
-  })
-  socket.on('disconnect',(socket)=>{
-    console.log('...disconnected')
-  })
-  
-})
-  
+app.use(express.static(path.resolve('./public')));
+app.use(cors());
 
+io.on('connection', (socket) => {
+  socket.on('send-message', (data) => {
+    // Broadcasting the message to sockets in the same room
+    const room = roomSockets[socket.id];
+    if (room) {
+      io.to(room).emit('message from server', data);
+    }
+  });
 
+  socket.on('join-room', ({ room }) => {
+    // Join the specified room
+    socket.join(room);
+    roomSockets[socket.id] = room;
+    console.log(`${socket.id} joined room ${room}`);
+  });
 
-app.get('/',(req,res)=>{
-  res.sendFile('/public/index.html')    
-})
+  socket.on('disconnect', () => {
+    // Remove the socket from the roomSockets object on disconnect
+    const room = roomSockets[socket.id];
+    if (room) {
+      delete roomSockets[socket.id];
+      console.log(`${socket.id} left room ${room}`);
+    }
+    console.log('...disconnected');
+  });
+});
 
-server.listen(4000,()=>console.log('...on 4000 '))
+app.get('/', (req, res) => {
+  res.sendFile('/public/index.html');
+});
+
+server.listen(4000, () => console.log('...on 4000 '));
