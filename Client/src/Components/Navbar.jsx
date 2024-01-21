@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom'
 
 function Navbar() {
   return (
-    <div className='border-2'>
-        <Link to='/'>home</Link>
+    <div className=' mx-[10%] flex text-green-600 underline my-4 mb-4'>
+        <Link to='/' className='mr-8 '>HOME</Link>
         
-        <Link to='/chat'>chat</Link>
+        <Link to='/chat'>CHAT</Link>
     </div>
   )
 }

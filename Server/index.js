@@ -3,6 +3,7 @@ const http = require('http');
 const path = require('path');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const Sentiment = require('sentiment');
 
 const app = express();
 const server = http.createServer(app);
@@ -21,10 +22,14 @@ app.use(cors());
 
 io.on('connection', (socket) => {
   socket.on('send-message', (data) => {
-    // Broadcasting the message to sockets in the same room
+    // Analyzing sentiment and determining emoji
+    const sentiment = analyzeSentiment(data.message);
+    const emoji = getEmojiBySentiment(sentiment);
+
+    // Broadcasting the message and emoji to sockets in the same room
     const room = roomSockets[socket.id];
     if (room) {
-      io.to(room).emit('message from server', data);
+      io.to(room).emit('message from server', { message: data.message, emoji });
     }
   });
 
@@ -51,3 +56,23 @@ app.get('/', (req, res) => {
 });
 
 server.listen(4000, () => console.log('...on 4000 '));
+
+function analyzeSentiment(text) {
+  const sentiment = new Sentiment();
+  const result = sentiment.analyze(text);
+  return result.score;
+}
+
+function getEmojiBySentiment(sentimentScore) {
+  if (sentimentScore < -1) {
+    return '😢'; // Very sad
+  } else if (sentimentScore < 0) {
+    return '😞'; // Sad
+  } else if (sentimentScore === 0) {
+    return null; // Neutral
+  } else if (sentimentScore < 2) {
+    return '😊'; // Happy
+  } else {
+    return '😄'; // Very happy
+  }
+}

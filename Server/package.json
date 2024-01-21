@@ -10,15 +10,22 @@
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.1.1",
+    "compromise": "^14.11.1",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "csurf": "^1.11.0",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "google-translate-api": "^2.3.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^7.6.3",
     "multer": "^1.4.5-lts.1",
+    "node-emoji": "^2.1.3",
+    "node-nlp": "^4.27.0",
     "nodemon": "^3.0.1",
-    "socket.io": "^4.7.3"
+    "senti": "^0.0.2",
+    "sentiment": "^5.0.2",
+    "socket.io": "^4.7.3",
+    "translate": "^2.0.2"
   }
 }
