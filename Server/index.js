@@ -23,13 +23,15 @@ app.use(cors());
 io.on('connection', (socket) => {
   socket.on('send-message', (data) => {
     // Analyzing sentiment and determining emoji
+    
+  console.log('Sent message:', data);
     const sentiment = analyzeSentiment(data.message);
     const emoji = getEmojiBySentiment(sentiment);
 
     // Broadcasting the message and emoji to sockets in the same room
     const room = roomSockets[socket.id];
     if (room) {
-      io.to(room).emit('message from server', { message: data.message, emoji });
+      io.to(room).emit('message from server', { message: data.message, emoji,senderId: socket.id });
     }
   });
 
@@ -64,15 +66,15 @@ function analyzeSentiment(text) {
 }
 
 function getEmojiBySentiment(sentimentScore) {
-  if (sentimentScore < -1) {
-    return '😢'; // Very sad
-  } else if (sentimentScore < 0) {
-    return '😞'; // Sad
+  // if (sentimentScore < -1) {
+  //   return '😢'; // Very sad
+  // } 
+   if (sentimentScore < 0) {
+    return  ['😞', '😢', '😣']; 
   } else if (sentimentScore === 0) {
-    return null; // Neutral
-  } else if (sentimentScore < 2) {
-    return '😊'; // Happy
-  } else {
-    return '😄'; // Very happy
+    return ['🌱', '🎉', '⭐']; 
+  }
+   else {
+    return  ['😄', '😊', '😁']; 
   }
 }
