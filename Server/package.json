@@ -23,6 +23,7 @@
     "node-emoji": "^2.1.3",
     "node-nlp": "^4.27.0",
     "nodemon": "^3.0.1",
+    "nspell": "^2.1.5",
     "senti": "^0.0.2",
     "sentiment": "^5.0.2",
     "socket.io": "^4.7.3",
